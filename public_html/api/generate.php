@@ -193,19 +193,21 @@ function createNewPageWithGemini($pdo, $query) {
         error_log("Step 2: Calling Gemini API with prompt of " . strlen($prompt) . " characters");
         
         // Step 1: Call Gemini API and get HTML response
+        error_log("🔄 STEP 1: Calling Gemini API for query: $query");
         $htmlContent = $aiService->generatePageContent($query, []);
         
         if (!$htmlContent || strlen($htmlContent) < 100) {
-            error_log("ERROR: Gemini API returned empty or invalid content");
-            throw new Exception('Failed to generate page content from Gemini API. Please try again.');
+            error_log("❌ STEP 1 FAILED: Gemini API returned empty or invalid content");
+            error_log("   Returned: " . (is_null($htmlContent) ? "NULL" : strlen($htmlContent) . " bytes"));
+            throw new Exception('Gemini API did not return valid content. Check: 1) API key 2) API status 3) Network connection');
         }
         
-        error_log("Step 3: Received HTML content from Gemini (" . strlen($htmlContent) . " characters)");
+        error_log("✓ STEP 1 COMPLETE: Received HTML content from Gemini (" . strlen($htmlContent) . " characters)");
         
         // Wrap raw Gemini content in proper HTML structure if needed
         if (stripos($htmlContent, '<html') === false && stripos($htmlContent, '<!DOCTYPE') === false) {
             $htmlContent = wrapHTMLContent($htmlContent);
-            error_log("Step 3b: Wrapped content in HTML structure");
+            error_log("✓ STEP 1b: Wrapped content in HTML structure");
         }
         
         // Create slug and title
@@ -218,7 +220,7 @@ function createNewPageWithGemini($pdo, $query) {
         
         if ($result['count'] > 0) {
             $slug = $slug . '-' . time();
-            error_log("Slug already exists, created unique slug: $slug");
+            error_log("   Slug conflict resolved: $slug");
         }
         
         // Generate description
@@ -233,54 +235,68 @@ function createNewPageWithGemini($pdo, $query) {
         ];
         $description = $descriptions[array_rand($descriptions)];
         
-        error_log("Step 4: Storing HTML content in database");
+        error_log("🔄 STEP 2: Storing HTML content in database");
         
         // Step 2: Store HTML in database
-        $stmt = $pdo->prepare("
-            INSERT INTO pages (
-                query, slug, title, description, html_content, 
-                ai_provider, ai_model, status, view_count, created_at, updated_at
-            ) VALUES (
-                :query, :slug, :title, :description, :html_content,
-                :ai_provider, :ai_model, 'active', 1, NOW(), NOW()
-            )
-        ");
-        
-        $success = $stmt->execute([
-            'query' => $query,
-            'slug' => $slug,
-            'title' => $query,
-            'description' => $description,
-            'html_content' => $htmlContent,
-            'ai_provider' => AI_PROVIDER,
-            'ai_model' => 'gemini-2.5-flash'
-        ]);
-        
-        if (!$success) {
-            throw new Exception('Failed to store page in database');
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO pages (
+                    query, slug, title, description, html_content, 
+                    ai_provider, ai_model, status, view_count, created_at, updated_at
+                ) VALUES (
+                    :query, :slug, :title, :description, :html_content,
+                    :ai_provider, :ai_model, 'active', 1, NOW(), NOW()
+                )
+            ");
+            
+            $success = $stmt->execute([
+                'query' => $query,
+                'slug' => $slug,
+                'title' => $query,
+                'description' => $description,
+                'html_content' => $htmlContent,
+                'ai_provider' => AI_PROVIDER,
+                'ai_model' => 'gemini-2.5-flash'
+            ]);
+            
+            if (!$success) {
+                throw new Exception('Database INSERT failed: ' . implode(', ', $stmt->errorInfo()));
+            }
+            
+            $pageId = $pdo->lastInsertId();
+            error_log("✓ STEP 2 COMPLETE: Page stored in database with ID: $pageId");
+        } catch (Exception $dbError) {
+            error_log("❌ STEP 2 FAILED: Database error");
+            error_log("   Details: " . $dbError->getMessage());
+            throw $dbError;
         }
-        
-        $pageId = $pdo->lastInsertId();
-        error_log("Step 5: Page stored in database with ID: $pageId");
         
         // Step 3: Retrieve page from database
-        error_log("Step 6: Retrieving page from database");
+        error_log("🔄 STEP 3: Retrieving page from database");
         
-        $stmt = $pdo->prepare("
-            SELECT id, query, slug, title, description, html_content, view_count,
-                   created_at, updated_at
-            FROM pages 
-            WHERE id = :id
-        ");
-        
-        $stmt->execute(['id' => $pageId]);
-        $retrievedPage = $stmt->fetch();
-        
-        if (!$retrievedPage) {
-            throw new Exception('Failed to retrieve created page from database');
+        try {
+            $stmt = $pdo->prepare("
+                SELECT id, query, slug, title, description, html_content, view_count,
+                       created_at, updated_at
+                FROM pages 
+                WHERE id = :id
+            ");
+            
+            $stmt->execute(['id' => $pageId]);
+            $retrievedPage = $stmt->fetch();
+            
+            if (!$retrievedPage) {
+                throw new Exception('Page not found in database after insertion (ID: ' . $pageId . ')');
+            }
+            
+            error_log("✓ STEP 3 COMPLETE: Successfully retrieved page from database");
+        } catch (Exception $dbError) {
+            error_log("❌ STEP 3 FAILED: Failed to retrieve page");
+            error_log("   Details: " . $dbError->getMessage());
+            throw $dbError;
         }
         
-        error_log("Step 7: Successfully retrieved page from database, returning to frontend");
+        error_log("✓ All steps complete! Returning page to frontend");
         
         // Step 4: Return the page from database to frontend
         http_response_code(201);
@@ -305,15 +321,45 @@ function createNewPageWithGemini($pdo, $query) {
         ]);
         
     } catch (Exception $e) {
-        error_log("ERROR in createNewPageWithGemini: " . $e->getMessage());
+        error_log("❌ GENERATION FAILED: " . $e->getMessage());
+        error_log("Trace: " . $e->getTraceAsString());
+        
         http_response_code(500);
+        
+        $errorMsg = $e->getMessage();
+        $hints = [];
+        
+        // Provide helpful hints based on error message
+        if (strpos($errorMsg, 'API key') !== false || strpos($errorMsg, 'invalid') !== false) {
+            $hints[] = "Check your Gemini API key in /public_html/includes/apikeys.php";
+            $hints[] = "Run: php /public_html/diagnose-api.php";
+        } 
+        
+        if (strpos($errorMsg, 'returned empty') !== false) {
+            $hints[] = "Gemini API returned no content - check API status";
+            $hints[] = "Try a simpler query (fewer words)";
+        }
+        
+        if (strpos($errorMsg, 'Database') !== false || strpos($errorMsg, 'database') !== false) {
+            $hints[] = "Database connection issue";
+            $hints[] = "Verify database credentials in config.php";
+        }
+        
+        if (strpos($errorMsg, 'timed out') !== false) {
+            $hints[] = "Request timeout - API is slow or unreachable";
+            $hints[] = "Check your internet connection";
+            $hints[] = "Try again in a moment";
+        }
+        
         echo json_encode([
             'success' => false,
-            'error' => 'Page generation failed: ' . $e->getMessage(),
-            'hint' => 'Please check that the Gemini API key is valid and the API is accessible',
+            'error' => 'Page generation failed: ' . $errorMsg,
+            'hints' => !empty($hints) ? $hints : null,
+            'diagnostic_url' => '/diagnose-api.php',
             'timestamp' => date('Y-m-d H:i:s')
         ]);
     }
+}
 }
 
 /**

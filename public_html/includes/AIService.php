@@ -171,19 +171,36 @@ PROMPT;
      */
     private function callGemini($prompt) {
         if (!$this->apiKey) {
-            error_log("Gemini API Error: No API key provided");
+            error_log("❌ Gemini API Error: No API key provided");
+            error_log("   Check config.php - GEMINI_API_KEY is not defined");
             return null;
         }
         
         // Check for placeholder or invalid key
-        if (strpos($this->apiKey, 'YOUR_') !== false || strlen($this->apiKey) < 10) {
-            error_log("Gemini API Error: Invalid API key format");
+        if (strpos($this->apiKey, 'YOUR_') !== false) {
+            error_log("❌ Gemini API Error: API key is a PLACEHOLDER");
+            error_log("   Current value: " . $this->apiKey);
+            error_log("   Action: Set actual API key in apikeys.php");
+            error_log("   Get key from: https://aistudio.google.com/apikey");
+            return null;
+        }
+        
+        if (strlen($this->apiKey) < 10) {
+            error_log("❌ Gemini API Error: API key too short (" . strlen($this->apiKey) . " chars)");
+            error_log("   Valid keys should be 40+ characters");
             return null;
         }
         
         // Use the model from configuration
         $model = $this->model ?: 'gemini-2.5-flash';
         $url = 'https://generativelanguage.googleapis.com/v1/models/' . $model . ':generateContent?key=' . $this->apiKey;
+        
+        // Limit prompt size for API
+        $maxPromptChars = 30000;
+        if (strlen($prompt) > $maxPromptChars) {
+            error_log("⚠️  Prompt size (" . strlen($prompt) . ") > max (" . $maxPromptChars . "). Truncating.");
+            $prompt = substr($prompt, 0, $maxPromptChars);
+        }
         
         $data = [
             'contents' => [
@@ -202,13 +219,16 @@ PROMPT;
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_TIMEOUT => 300,  // Increased to 300 seconds (5 minutes) to allow Gemini API to process
-            CURLOPT_CONNECTTIMEOUT => 30,
+            CURLOPT_TIMEOUT => 300,  // 5 minutes for API to process
+            CURLOPT_CONNECTTIMEOUT => 30,  // 30 seconds to connect
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2
         ]);
         
-        error_log("Gemini API: Sending request to $model model...");
+        error_log("📤 Gemini API: Sending request to $model model...");
+        error_log("   Prompt size: " . strlen($prompt) . " characters");
+        error_log("   Request timeout: 300s | Connection timeout: 30s");
+        
         $startTime = microtime(true);
         
         $response = curl_exec($ch);
@@ -218,11 +238,15 @@ PROMPT;
         
         curl_close($ch);
         
-        error_log("Gemini API: Request completed in " . round($elapsedTime, 2) . "s (HTTP $httpCode)");
+        error_log("📥 Gemini API: Response received in " . round($elapsedTime, 2) . "s (HTTP $httpCode)");
         
         // Log curl errors
         if ($curlError) {
-            error_log("Gemini API cURL Error: " . $curlError);
+            error_log("❌ Gemini API cURL Error: " . $curlError);
+            if (strpos($curlError, 'timed out') !== false) {
+                error_log("   --> Connection timed out. API server may be slow or unreachable.");
+                error_log("   --> Check your internet connection and try again.");
+            }
             return null;
         }
         
@@ -231,29 +255,48 @@ PROMPT;
             if (isset($result['candidates']) && !empty($result['candidates'])) {
                 $text = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
                 if ($text) {
-                    error_log("Gemini API: Successfully generated content (" . strlen($text) . " characters)");
+                    error_log("✓ Gemini API: Successfully generated content (" . strlen($text) . " characters)");
                     return $text;
                 }
             }
-            error_log("Gemini API: Invalid response structure - " . substr($response, 0, 500));
+            error_log("❌ Gemini API: Invalid response structure");
+            error_log("   Response start: " . substr($response, 0, 200));
             return null;
         }
         
         // Log error responses with more detail
         $responseData = json_decode($response, true);
-        $errorMsg = "Gemini API Error - HTTP $httpCode";
+        $errorMsg = "❌ Gemini API Error - HTTP $httpCode";
+        
         if (isset($responseData['error']['message'])) {
             $errorMsg .= ": " . $responseData['error']['message'];
         }
         error_log($errorMsg);
         
-        // Special handling for specific errors
-        if ($httpCode === 403 && isset($responseData['error']['message'])) {
-            if (strpos($responseData['error']['message'], 'leaked') !== false) {
-                error_log("WARNING: Gemini API key has been reported as leaked and is disabled!");
-                error_log("Please generate a new API key at: https://aistudio.google.com/apikey");
+        // Provide specific help for common errors
+        if ($httpCode === 400) {
+            error_log("   Problem: Bad Request - Invalid prompt or parameters");
+            error_log("   Solution: Try a simpler query (shorter text)");
+        } else if ($httpCode === 401) {
+            error_log("   Problem: Unauthorized - API key issue");
+            error_log("   Solution: Verify API key is correct");
+        } else if ($httpCode === 403) {
+            error_log("   Problem: Forbidden - Access denied");
+            if (isset($responseData['error']['message']) && strpos($responseData['error']['message'], 'leaked') !== false) {
+                error_log("   --> API key has been reported as leaked!");
+                error_log("   --> Get a new key: https://aistudio.google.com/apikey");
+            } else {
+                error_log("   Solution: Check API quota or key permissions");
             }
+        } else if ($httpCode === 429) {
+            error_log("   Problem: Rate Limited - Too many requests");
+            error_log("   Solution: Wait a moment and try again");
+        } else if ($httpCode === 500 || $httpCode === 503) {
+            error_log("   Problem: Server Error - Google API may be down");
+            error_log("   Solution: Try again in a few moments");
         }
+        
+        error_log("Full response: " . substr(json_encode($responseData), 0, 500));
         
         return null;
     }

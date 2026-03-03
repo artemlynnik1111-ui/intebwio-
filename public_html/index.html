@@ -1321,17 +1321,30 @@
             state.lastSearch = query;
             state.stats.totalSearches++;
             
-            showStatus('🔍 Searching database for pages...', 'loading', -1);
+            showStatus('🔍 Searching database and generating page (this may take up to 60 seconds)...', 'loading', -1);
             setLoading(true);
             elements.generatedPageWrapper.classList.remove('active');
             elements.autocompleteList.classList.remove('active');
 
+            const abortController = new AbortController();
+            // Set timeout to 120 seconds (Gemini API can take up to 60s + buffer for processing)
+            const timeoutId = setTimeout(() => abortController.abort(), 120000);
+
             try {
                 // Call backend API to generate/fetch page
-                const response = await fetch(`./api/generate.php?action=generate&query=${encodeURIComponent(query)}`);
+                // This handles both fetching cached pages and generating new ones with Gemini API
+                const response = await fetch(
+                    `./api/generate.php?action=generate&query=${encodeURIComponent(query)}`,
+                    {
+                        signal: abortController.signal,
+                        method: 'GET'
+                    }
+                );
+                
+                clearTimeout(timeoutId);
                 
                 if (!response.ok) {
-                    throw new Error(`API error: ${response.statusText}`);
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
                 }
                 
                 const data = await response.json();
@@ -1351,8 +1364,20 @@
                 window.location.href = `?page=${encodeURIComponent(pageData.slug)}`;
                 
             } catch (error) {
+                clearTimeout(timeoutId);
+                
                 console.error('Search error:', error);
-                showStatus('❌ Error: ' + error.message, 'error', 5000);
+                
+                let errorMessage = error.message;
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out after 2 minutes. API might be busy. Please try again.';
+                } else if (errorMessage.includes('Failed to fetch')) {
+                    errorMessage = 'Network error. Please check your connection and try again.';
+                } else if (errorMessage.includes('API key')) {
+                    errorMessage = 'API key configuration error. Please check server logs.';
+                }
+                
+                showStatus('❌ ' + errorMessage, 'error', 10000);
             } finally {
                 state.isSearching = false;
                 setLoading(false);

@@ -31,8 +31,32 @@ class APIKeyManager {
     private static function loadKeys() {
         if (self::$loaded) return;
 
+        // =========================
+        // OPTION 1: Environment variables (production recommended)
+        // SET THESE VARIABLES ON YOUR SERVER:
+        // export GEMINI_API_KEY='AIzaSy...'
+        // =========================
+        
+        // =========================
+        // OPTION 2: Direct key assignment (development)
+        // Uncomment and paste your key here to test locally:
+        // =========================
+        
         // Gemini API Key (Google)
-        self::$keys['gemini'] = getenv('GEMINI_API_KEY') ?: 'YOUR_GEMINI_API_KEY_HERE';
+        // PASTE YOUR ACTUAL API KEY HERE:
+        $geminiKey = getenv('GEMINI_API_KEY');
+        if (!$geminiKey || strpos($geminiKey, 'YOUR_') !== false) {
+            // Try to load from local file if environment not set
+            // This is for development/testing only - NOT for production!
+            // OPTION: Uncomment the line below and paste your real API key:
+            // $geminiKey = 'AIzaSy_YOUR_ACTUAL_KEY_HERE';
+            
+            // If still no key, use placeholder
+            if (!$geminiKey) {
+                $geminiKey = 'YOUR_GEMINI_API_KEY_HERE';
+            }
+        }
+        self::$keys['gemini'] = trim($geminiKey);
         
         // Google Custom Search API Key
         self::$keys['google_search'] = getenv('GOOGLE_SEARCH_API_KEY') ?: 'YOUR_GOOGLE_SEARCH_KEY_HERE';
