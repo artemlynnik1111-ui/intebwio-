@@ -4,11 +4,8 @@
  * Run this to see detailed error messages from the Gemini API
  */
 
-// Load only API keys without database
-if (!defined('GEMINI_API_KEY')) {
-    define('GEMINI_API_KEY', 'AIzaSyAPMrwvoxVtFBegqxqOT1JH_7QQZLnhqzg');
-    define('AI_PROVIDER', 'gemini');
-}
+// Load configuration with API keys
+require_once __DIR__ . '/includes/config.php';
 
 $apiKey = GEMINI_API_KEY;
 $apiProvider = AI_PROVIDER;

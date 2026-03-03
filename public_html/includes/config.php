@@ -34,11 +34,15 @@ define('CONTENT_SOURCES', [
     'github' => 'https://api.github.com'
 ]);
 
-// API Keys (set your actual keys here)
-define('GOOGLE_API_KEY', 'AIzaSyAPMrwvoxVtFBegqxqOT1JH_7QQZLnhqzg');
-define('GEMINI_API_KEY', 'AIzaSyAPMrwvoxVtFBegqxqOT1JH_7QQZLnhqzg');
+// Load API Keys from centralized APIKeyManager
+require_once __DIR__ . '/apikeys.php';
+
+// API Keys (loaded from environment variables or apikeys.php)
+define('GOOGLE_API_KEY', APIKeyManager::getKey('gemini'));
+define('GEMINI_API_KEY', APIKeyManager::getKey('gemini'));
 define('AI_PROVIDER', 'gemini');
-define('SERPAPI_KEY', 'YOUR_SERPAPI_KEY');
+define('SERPAPI_KEY', APIKeyManager::getKey('serpapi'));
+define('GOOGLE_SEARCH_API_KEY', APIKeyManager::getKey('google_search'));
 
 // Logging
 define('LOG_FILE', dirname(__FILE__) . '/../logs/intebwio.log');

@@ -1060,11 +1060,11 @@
          */
 
         // ==================== CONFIGURATION ====================
-        const CONFIG = {
+        let CONFIG = {
             apiKeys: {
-                gemini: 'AIzaSyAPMrwvoxVtFBegqxqOT1JH_7QQZLnhqzg',
-                googleSearch: 'YOUR_GOOGLE_SEARCH_KEY_HERE',
-                serpapi: 'YOUR_SERPAPI_KEY_HERE'
+                gemini: '',
+                googleSearch: '',
+                serpapi: ''
             },
             updateInterval: 7 * 24 * 60 * 60 * 1000,
             similarityThreshold: 0.75,
@@ -1073,6 +1073,25 @@
             animationDuration: 300,
             storagePrefix: 'intebwio_'
         };
+
+        // ==================== LOAD API KEYS FROM SERVER ====================
+        async function loadAPIKeys() {
+            try {
+                const response = await fetch('/api/get-api-keys.php');
+                if (!response.ok) {
+                    console.warn('Failed to load API keys from server');
+                    return;
+                }
+                const keys = await response.json();
+                CONFIG.apiKeys = keys;
+                console.log('API keys loaded from server');
+            } catch (error) {
+                console.error('Error loading API keys:', error);
+            }
+        }
+
+        // Load API keys before initializing the app
+        loadAPIKeys();
 
         // ==================== STATE MANAGEMENT ====================
         const state = {

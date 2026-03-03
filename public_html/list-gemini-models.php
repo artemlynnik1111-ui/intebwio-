@@ -3,7 +3,7 @@
  * List all available Gemini models
  */
 
-define('GEMINI_API_KEY', 'AIzaSyAPMrwvoxVtFBegqxqOT1JH_7QQZLnhqzg');
+require_once __DIR__ . '/includes/config.php';
 
 $apiKey = GEMINI_API_KEY;
 

@@ -8,6 +8,10 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 set_time_limit(0);
 
+// Load configuration with API keys
+require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/AIService.php';
+
 echo "=== Simple Page Generation Test ===\n\n";
 
 $testQuery = "artificial intelligence";
@@ -16,12 +20,6 @@ echo "Configuration:\n";
 echo "- Max execution time: " . ini_get('max_execution_time') . "s\n";
 echo "- Socket timeout: " . ini_get('default_socket_timeout') . "s\n";
 echo "- Query: $testQuery\n\n";
-
-// Load API key directly
-define('GEMINI_API_KEY', 'AIzaSyAPMrwvoxVtFBegqxqOT1JH_7QQZLnhqzg');
-define('AI_PROVIDER', 'gemini');
-
-require_once __DIR__ . '/includes/AIService.php';
 
 $globalStart = microtime(true);
 
