@@ -390,6 +390,7 @@ function createNewPageWithGemini($pdo, $query) {
             'diagnostic_url' => '/diagnose-api.php',
             'timestamp' => date('Y-m-d H:i:s')
         ]);
+        exit;
     }
 }
 
