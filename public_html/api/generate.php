@@ -20,7 +20,8 @@ header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/AIService.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+// Handle CORS preflight requests
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
@@ -81,6 +82,7 @@ try {
         'error' => $e->getMessage(),
         'timestamp' => date('Y-m-d H:i:s')
     ]);
+    exit;
 }
 
 /**
