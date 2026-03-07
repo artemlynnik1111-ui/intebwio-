@@ -11,11 +11,20 @@ set_time_limit(600);  // 10 minutes
 ini_set('default_socket_timeout', 180);  // 3 minutes for socket operations
 
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/ContentAggregator.php';
 require_once __DIR__ . '/../includes/AIService.php';
 require_once __DIR__ . '/../includes/AdvancedPageGenerator.php';
+
+// Handle CORS preflight requests
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 try {
     error_log("=== PAGE GENERATION START ===");
@@ -33,8 +42,23 @@ try {
     error_log("Step 1: PDO connection verified");
     
     // Accept both POST JSON and GET parameters
-    $data = json_decode(file_get_contents('php://input'), true) ?? $_GET;
-    error_log("Step 2: Input data parsed");
+    $data = [];
+    
+    // Try to parse JSON from POST body first
+    $postData = file_get_contents('php://input');
+    if (!empty($postData)) {
+        $jsonData = json_decode($postData, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
+            $data = $jsonData;
+        }
+    }
+    
+    // Fall back to GET/POST parameters if JSON parsing failed or was empty
+    if (empty($data)) {
+        $data = $_REQUEST; // This includes both GET and POST parameters
+    }
+    
+    error_log("Step 2: Input data parsed - method: " . ($_SERVER['REQUEST_METHOD'] ?? 'unknown') . ", data keys: " . implode(',', array_keys($data)));
     
     if (!isset($data['query']) || empty(trim($data['query']))) {
         http_response_code(400);

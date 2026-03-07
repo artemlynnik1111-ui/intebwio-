@@ -27,3 +27,23 @@ Stack trace:
 [07-Mar-2026 11:00:38 UTC] Memory usage: 0.57MB
 [07-Mar-2026 11:00:38 UTC] Max memory: 128M
 [07-Mar-2026 11:00:38 UTC] ERROR: PDO not initialized
+[07-Mar-2026 11:05:37 UTC] === PAGE GENERATION START ===
+[07-Mar-2026 11:05:37 UTC] Memory usage: 0.57MB
+[07-Mar-2026 11:05:37 UTC] Max memory: 128M
+[07-Mar-2026 11:05:37 UTC] ERROR: PDO not initialized
+[07-Mar-2026 11:05:41 UTC] === PAGE GENERATION START ===
+[07-Mar-2026 11:05:41 UTC] Memory usage: 0.57MB
+[07-Mar-2026 11:05:41 UTC] Max memory: 128M
+[07-Mar-2026 11:05:41 UTC] ERROR: PDO not initialized
+[07-Mar-2026 11:06:07 UTC] === PAGE GENERATION START ===
+[07-Mar-2026 11:06:07 UTC] Memory usage: 0.57MB
+[07-Mar-2026 11:06:07 UTC] Max memory: 128M
+[07-Mar-2026 11:06:07 UTC] ERROR: PDO not initialized
+[07-Mar-2026 11:06:30 UTC] === PAGE GENERATION START ===
+[07-Mar-2026 11:06:30 UTC] Memory usage: 0.57MB
+[07-Mar-2026 11:06:30 UTC] Max memory: 128M
+[07-Mar-2026 11:06:30 UTC] ERROR: PDO not initialized
+[07-Mar-2026 11:06:40 UTC] === PAGE GENERATION START ===
+[07-Mar-2026 11:06:40 UTC] Memory usage: 0.57MB
+[07-Mar-2026 11:06:40 UTC] Max memory: 128M
+[07-Mar-2026 11:06:40 UTC] ERROR: PDO not initialized
