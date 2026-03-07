@@ -168,7 +168,7 @@ try {
     error_log("Step 15: Starting database insert");
     $pageId = null;
     $pageSlug = null;
-    if (function_exists('class_exists')) {
+    if ($pdo) {
         try {
             // Generate URL-friendly slug from query
             $pageSlug = strtolower(trim($normalizedQuery));
