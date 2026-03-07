@@ -43,7 +43,7 @@ try {
     }
     
     $searchQuery = trim($data['query']);
-    error_log("Step 3: Query received: '$searchQuery'")
+    error_log("Step 3: Query received: '$searchQuery'");
     $useExisting = isset($data['use_existing']) ? (bool)$data['use_existing'] : false;
     $skipAggregation = isset($data['skip_aggregation']) ? (bool)$data['skip_aggregation'] : false;
     
@@ -58,13 +58,13 @@ try {
         exit;
     }
     
-    error_log("Step 5: Input validation passed")
+    error_log("Step 5: Input validation passed");
     
     // Optional: Check for existing page if requested
-    if ($useExisting && function_exists('class_exists') && class_exists('Database')) {
+    if ($useExisting && $pdo && class_exists('Database')) {
         $stmt = $pdo->prepare("
             SELECT id, view_count FROM pages 
-            WHERE LOWER(search_query) = LOWER(?)
+            WHERE LOWER(query) = LOWER(?)
             ORDER BY view_count DESC
             LIMIT 1
         ");

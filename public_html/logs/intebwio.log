@@ -3,3 +3,23 @@
 [07-Mar-2026 10:06:00 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 16
 [07-Mar-2026 10:06:00 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 17
 [07-Mar-2026 10:06:00 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 18
+[07-Mar-2026 10:52:52 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 16
+[07-Mar-2026 10:52:52 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 17
+[07-Mar-2026 10:52:52 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 18
+[07-Mar-2026 10:54:41 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 16
+[07-Mar-2026 10:54:41 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 17
+[07-Mar-2026 10:54:41 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /workspaces/intebwio-/public_html/diagnose-errors.php:11) in /workspaces/intebwio-/public_html/api/generate.php on line 18
+[07-Mar-2026 10:56:33 UTC] PHP Fatal error:  Uncaught Error: Call to a member function exec() on null in /workspaces/intebwio-/public_html/includes/Database.php:19
+Stack trace:
+#0 /workspaces/intebwio-/public_html/setup-db.php(16): Database->initializeTables()
+#1 {main}
+  thrown in /workspaces/intebwio-/public_html/includes/Database.php on line 19
+[07-Mar-2026 10:56:33 UTC] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in /workspaces/intebwio-/public_html/api/pages-list.php:58
+Stack trace:
+#0 /workspaces/intebwio-/public_html/api/pages-list.php(25): listPages()
+#1 {main}
+  thrown in /workspaces/intebwio-/public_html/api/pages-list.php on line 58
+[07-Mar-2026 10:57:55 UTC] === PAGE GENERATION START ===
+[07-Mar-2026 10:57:55 UTC] Memory usage: 0.57MB
+[07-Mar-2026 10:57:55 UTC] Max memory: 128M
+[07-Mar-2026 10:57:55 UTC] ERROR: PDO not initialized
